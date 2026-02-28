@@ -1,0 +1,616 @@
+{% load static tz %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - {{ role }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --brand-blue: #20306F;
+            --brand-red: #d90429;
+            --sidebar-width-collapsed: 80px;
+            --sidebar-width-expanded: 260px;
+            --transition-speed: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            --glass-bg: linear-gradient(135deg, rgba(32, 48, 111, 0.95), rgba(21, 30, 69, 0.98));
+        }
+
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- LAYOUT WRAPPER --- */
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+            width: 100%;
+        }
+
+        /* --- GLASS SIDEBAR --- */
+        .glass-sidebar {
+            width: var(--sidebar-width-collapsed);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 25px 0;
+            transition: width var(--transition-speed);
+            overflow: hidden;
+            box-shadow: 5px 0 25px rgba(0,0,0,0.15);
+        }
+
+        .glass-sidebar.expanded {
+            width: var(--sidebar-width-expanded);
+            align-items: flex-start;
+            padding-left: 0;
+        }
+
+        .toggle-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 30px;
+            align-self: center;
+        }
+        .toggle-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+        .toggle-btn i { font-size: 1.4rem; }
+
+        .sidebar-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(-20px);
+            transition: all 0.3s ease;
+            flex-grow: 1;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .glass-sidebar.expanded .sidebar-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+            transition-delay: 0.1s;
+        }
+
+        .logo-container {
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .sidebar-logo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+        }
+
+        .user-profile {
+            text-align: center;
+            width: 100%;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 1.2rem;
+        }
+
+        .role-badge {
+            display: inline-block;
+            background: rgba(66, 133, 244, 0.2);
+            color: #8ab4f8;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* --- NEW STATS WIDGET --- */
+        .stats-widget {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2); /* Slightly darker for contrast */
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: auto; /* Pushes logout down */
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stats-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            /* Cool Cyan Gradient */
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+            transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .stats-info {
+            font-size: 0.8rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+
+        /* Logout */
+        .logout-container {
+            width: 100%;
+            padding-bottom: 20px;
+            margin-top: 20px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            background: linear-gradient(90deg, rgba(255,87,87,0.1), rgba(255,87,87,0.2));
+            color: #ffcccc;
+            border: 1px solid rgba(255, 87, 87, 0.3);
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255, 87, 87, 0.8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 87, 87, 0.4);
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+            width: calc(100% - var(--sidebar-width-collapsed));
+            transition: width var(--transition-speed);
+        }
+
+        .custom-card {
+            background: white;
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+        
+        thead { background: #f8fafc; }
+        thead th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            padding: 18px 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        tbody td {
+            padding: 18px 20px;
+            vertical-align: middle;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        .status-select {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-weight: 500;
+            color: #475569;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .status-select:hover { border-color: #cbd5e1; }
+
+        .btn-why {
+            background: #fffeb8; color: #b45309; border: 1px solid #fcd34d;
+            font-size: 0.7rem; font-weight: 700; padding: 5px 12px; border-radius: 50px;
+            margin-left: 10px; transition: transform 0.1s; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .btn-why:hover { transform: translateY(-1px); background: #fde047; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .btn-attachment {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            color: #64748b;
+            transition: all 0.2s ease;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-attachment:hover { background-color: #e0e7ff; color: var(--brand-blue); transform: translateY(-2px); }
+
+        /* --- IMAGE VIEWER MODAL --- */
+        .image-viewer-content { background: transparent; border: none; box-shadow: none; }
+        .viewer-toolbar {
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px);
+            padding: 10px 20px; border-radius: 50px; display: inline-flex; gap: 15px; margin-bottom: 15px;
+        }
+        .viewer-btn {
+            background: transparent; border: none; color: white; font-size: 1.2rem;
+            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .viewer-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .viewer-btn.close-btn { color: #ff6b6b; }
+        .image-container {
+            position: relative; overflow: hidden; border-radius: 12px;
+            background: rgba(0,0,0,0.5); min-height: 400px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #previewImage { max-height: 80vh; max-width: 100%; transition: transform 0.3s; }
+
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard-wrapper">
+    
+    <nav class="glass-sidebar" id="sidebar">
+        <button class="toggle-btn" id="sidebarToggle">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <div class="sidebar-content">
+            <div class="logo-container">
+                <img src="{% static 'images/logo.png' %}" class="sidebar-logo" alt="Logo">
+            </div>
+            
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                <div style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px;">Signed in as</div>
+                <div class="role-badge">{{ role }}</div>
+            </div>
+
+            <div class="stats-widget">
+                <div class="stats-title">
+                    <span>Resolution</span>
+                    <i class="bi bi-activity"></i>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar-fill" id="statsBar"></div>
+                </div>
+                <div class="stats-info">
+                    <span id="closedCount">0 Closed</span>
+                    <span id="percentText">0%</span>
+                </div>
+            </div>
+
+            <div class="logout-container">
+                <form method="POST" action="{% url 'accounts:logout' %}">
+                    {% csrf_token %}
+                    <button class="logout-btn">
+                        <i class="bi bi-box-arrow-left"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="card custom-card">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Reported</th>
+                            <th>Location</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th class="text-center">Attachment</th>
+                            <th class="text-center">Priority</th>
+                            <th>Status</th>
+                            {% if role == 'Admin' %}<th>Actions</th>{% endif %}
+                        </tr>
+                    </thead>
+
+                    <tbody id="ticketTableBody">
+                        {% for ticket in tickets %}
+                        <tr>
+                            <td><span class="fw-bold text-secondary">#{{ ticket.id }}</span></td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ ticket.created_at|localtime|date:"M d, Y" }}</div>
+                                <small class="text-muted">{{ ticket.created_at|localtime|time:"h:i A" }}</small>
+                            </td>
+                            <td>{{ ticket.location.name }}</td>
+                            <td>{{ ticket.category }}</td>
+                            <td class="text-muted small text-truncate" style="max-width: 200px;">{{ ticket.description }}</td>
+                            
+                            <td class="text-center">
+                                {% if ticket.photo %}
+                                <button onclick="viewImage('{{ ticket.photo.url }}')" class="btn-attachment" title="View Image">
+                                    <i class="bi bi-image-fill" style="font-size: 1.3rem; color: var(--brand-blue);"></i>
+                                </button>
+                                {% else %}
+                                <span class="text-muted small opacity-25"><i class="bi bi-dash-lg"></i></span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <div class="d-flex justify-content-center">
+                                    <span class="badge rounded-pill 
+                                        {% if ticket.priority == 'High' %}bg-danger
+                                        {% elif ticket.priority == 'Medium' %}bg-warning text-dark
+                                        {% else %}bg-info{% endif %}"
+                                        title="{{ ticket.priority }}" 
+                                        style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; padding: 0;">
+                                        {{ ticket.priority|slice:":1" }}
+                                    </span>
+                                </div>
+                            </td>
+
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if role == 'Admin' or role == 'Manager' %}
+                                        <form method="POST" action="{% url 'accounts:update_ticket' ticket.id %}" id="statusForm{{ ticket.id }}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="remarks">
+                                            <select name="status" class="form-select form-select-sm status-select"
+                                                    data-ticket-id="{{ ticket.id }}" onchange="handleStatusChange(this)">
+                                                
+                                                {% with current=ticket.status %}
+                                                <option value="Open" {% if current == 'Open' %}selected{% endif %} {% if current != 'Open' %}disabled{% endif %}>Open</option>
+                                                <option value="Attended" {% if current == 'Attended' %}selected{% endif %} {% if current in 'In Progress Delayed Closed' %}disabled{% endif %}>Attended</option>
+                                                <option value="In Progress" {% if current == 'In Progress' %}selected{% endif %} {% if current in 'Delayed Closed' %}disabled{% endif %}>In Progress</option>
+                                                <option value="Delayed" {% if current == 'Delayed' %}selected{% endif %} {% if current == 'Closed' %}disabled{% endif %}>Delayed</option>
+                                                <option value="Closed" {% if current == 'Closed' %}selected{% endif %}>Closed</option>
+                                                {% endwith %}
+                                                
+                                            </select>
+                                        </form>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ ticket.status }}</span>
+                                    {% endif %}
+
+                                    {% if ticket.status == 'Delayed' %}
+                                    <button class="btn-why" onclick="showReason(`{{ ticket.remarks|default:'No reason provided.'|escapejs }}`)">
+                                        <i class="bi bi-question-circle-fill"></i> WHY?
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+
+                            {% if role == 'Admin' %}
+                            <td>
+                                <form method="POST" action="{% url 'accounts:delete_ticket' ticket.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-link text-danger p-0" title="Delete Ticket"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content image-viewer-content">
+            <div class="d-flex justify-content-center">
+                <div class="viewer-toolbar">
+                    <button class="viewer-btn" onclick="rotateImg(-90)"><i class="bi bi-arrow-counterclockwise"></i></button>
+                    <button class="viewer-btn" onclick="zoomImg(-0.2)"><i class="bi bi-zoom-out"></i></button>
+                    <button class="viewer-btn" onclick="zoomImg(0.2)"><i class="bi bi-zoom-in"></i></button>
+                    <button class="viewer-btn" onclick="rotateImg(90)"><i class="bi bi-arrow-clockwise"></i></button>
+                    <button class="viewer-btn close-btn" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 text-center">
+                <div class="image-container"><img id="previewImage" src=""></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="delayedModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title fw-bold">Reason Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <textarea id="globalRemarkInput" class="form-control" rows="3" placeholder="Enter reason..."></textarea>
+                <div id="remarkError" class="text-danger small mt-2 d-none"><i class="bi bi-exclamation-circle"></i> Required!</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-warning fw-bold" onclick="confirmDelay()">Save Status</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="viewReasonModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title fw-bold">Delay Reason</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4"><p id="reasonText" class="fs-5 mb-0"></p></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // --- 1. SIDEBAR TOGGLE ---
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('sidebarToggle');
+    const toggleIcon = toggleBtn.querySelector('i');
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('expanded');
+        if (sidebar.classList.contains('expanded')) {
+            toggleIcon.classList.remove('bi-list'); toggleIcon.classList.add('bi-chevron-left');
+        } else {
+            toggleIcon.classList.remove('bi-chevron-left'); toggleIcon.classList.add('bi-list');
+        }
+    });
+
+    // --- 2. STATS CALCULATION (Auto Bar Graph) ---
+    function updateStats() {
+        const rows = document.querySelectorAll('#ticketTableBody tr');
+        let total = rows.length;
+        let closed = 0;
+
+        rows.forEach(row => {
+            const select = row.querySelector('select[name="status"]');
+            if (select && select.value === 'Closed') {
+                closed++;
+            } else {
+                const badge = row.querySelector('.badge.bg-secondary');
+                if (badge && badge.innerText.trim() === 'Closed') closed++;
+            }
+        });
+
+        const percent = total > 0 ? Math.round((closed / total) * 100) : 0;
+        
+        setTimeout(() => {
+            document.getElementById('statsBar').style.width = percent + '%';
+        }, 500); 
+        
+        document.getElementById('closedCount').innerText = `${closed} / ${total} Closed`;
+        document.getElementById('percentText').innerText = `${percent}%`;
+    }
+
+    // --- 3. TICKET LOGIC ---
+    let activeSelectElement = null;
+    let delayModalInstance = null;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        delayModalInstance = new bootstrap.Modal(document.getElementById('delayedModal'));
+        updateStats(); 
+    });
+
+    function handleStatusChange(selectElement) {
+        if (selectElement.value === 'Delayed') {
+            activeSelectElement = selectElement;
+            document.getElementById('globalRemarkInput').value = "";
+            document.getElementById('remarkError').classList.add('d-none');
+            delayModalInstance.show();
+        } else {
+            document.getElementById('statusForm' + selectElement.dataset.ticketId).submit();
+        }
+    }
+
+    function confirmDelay() {
+        const text = document.getElementById('globalRemarkInput').value.trim();
+        if (!text) {
+            document.getElementById('remarkError').classList.remove('d-none');
+            return;
+        }
+        const form = document.getElementById('statusForm' + activeSelectElement.dataset.ticketId);
+        form.querySelector("input[name='remarks']").value = text;
+        delayModalInstance.hide();
+        form.submit();
+    }
+
+    function showReason(reason) {
+        document.getElementById('reasonText').innerText = reason || "No reason provided.";
+        new bootstrap.Modal(document.getElementById('viewReasonModal')).show();
+    }
+
+    // --- 4. IMAGE VIEWER ---
+    let currentScale = 1;
+    let currentRotation = 0;
+    const imgElement = document.getElementById('previewImage');
+    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+
+    function viewImage(url) {
+        imgElement.src = url;
+        currentScale = 1; currentRotation = 0; updateTransform();
+        imageModal.show();
+    }
+    function zoomImg(factor) {
+        currentScale += factor; if (currentScale < 0.2) currentScale = 0.2; updateTransform();
+    }
+    function rotateImg(deg) {
+        currentRotation += deg; updateTransform();
+    }
+    function updateTransform() {
+        imgElement.style.transform = `scale(${currentScale}) rotate(${currentRotation}deg)`;
+    }
+</script>
+
+</body>
+</html>

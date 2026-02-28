@@ -1,0 +1,537 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neverno CMMS - Report Issue</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+    /* Global & Background */
+    body {
+        background: linear-gradient(135deg, #1e2a5c 0%, #111a3f 100%);
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* Ambient Background Blobs to show off the glass effect */
+    body::before, body::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        z-index: -1;
+        filter: blur(80px);
+    }
+    body::before {
+        width: 350px;
+        height: 350px;
+        background: rgba(217, 4, 41, 0.4); /* Brand Red */
+        top: 5%;
+        left: 15%;
+    }
+    body::after {
+        width: 400px;
+        height: 400px;
+        background: rgba(0, 150, 255, 0.3); /* Bright Blue */
+        bottom: 5%;
+        right: 15%;
+    }
+
+    /* Centered Glass Card */
+    .form-container {
+        /* Glassmorphism core */
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(24px) saturate(150%);
+        -webkit-backdrop-filter: blur(24px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+        
+        width: 100%;
+        max-width: 500px;
+        border-radius: 24px;
+        padding: 45px 40px;
+    }
+
+    /* Header & Branding */
+    .brand-logo {
+        width: 110px;
+        margin-bottom: 15px;
+        transition: transform 0.3s ease;
+    }
+    .brand-logo:hover {
+        transform: scale(1.05);
+    }
+
+    .brand-sub {
+        color: #475569;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .site-display {
+        color: #1e2a5c;
+        font-weight: 800;
+        font-size: 1.4rem;
+        letter-spacing: 0.5px;
+        margin-top: 0;
+        margin-bottom: 30px;
+    }
+
+    /* Form Labels */
+    .form-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #334155;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    /* Glass Form Inputs */
+    select, textarea, input[type="text"], input[type="number"], input[type="tel"], input[type="email"] {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.6) !important;
+        border: 1px solid rgba(255, 255, 255, 0.9) !important;
+        border-radius: 12px !important;
+        padding: 14px 16px !important;
+        font-size: 0.95rem !important;
+        color: #1e293b !important;
+        transition: all 0.3s ease !important;
+        box-sizing: border-box;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+    }
+
+    select:focus, textarea:focus, input:focus {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border-color: #20306F !important;
+        outline: none !important;
+        box-shadow: 0 4px 12px rgba(32, 48, 111, 0.1) !important;
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .error-text {
+        color: #d90429;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-top: 6px;
+        display: block;
+    }
+
+    /* Glass Priority Segmented Control */
+    .priority-group {
+        display: flex;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        padding: 6px;
+        border-radius: 14px;
+    }
+
+    .priority-btn {
+        flex: 1;
+        text-align: center;
+        background: transparent;
+        border-radius: 10px;
+        padding: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        color: #475569;
+        margin: 0;
+        border: 2px solid transparent;
+    }
+
+    #low:checked + .priority-btn {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: #22c55e;
+        color: #15803d;
+        box-shadow: 0 4px 10px rgba(34, 197, 94, 0.15);
+    }
+
+    #med:checked + .priority-btn {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: #eab308;
+        color: #a16207;
+        box-shadow: 0 4px 10px rgba(234, 179, 8, 0.15);
+    }
+
+    #high:checked + .priority-btn {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: #ef4444;
+        color: #b91c1c;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
+    }
+
+    /* Glass Upload Box */
+    .photo-upload-box {
+        border: 2px dashed rgba(100, 116, 139, 0.4);
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 16px;
+        padding: 25px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #475569;
+        width: 100%;
+        position: relative;
+    }
+
+    .photo-upload-box:hover {
+        background: rgba(255, 255, 255, 0.7);
+        border-color: #20306F;
+        color: #20306F;
+    }
+
+    .upload-icon {
+        width: 32px;
+        height: 32px;
+        margin-bottom: 10px;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    .photo-upload-box:hover .upload-icon {
+        opacity: 1;
+    }
+
+    .upload-text {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    input[type="file"] {
+        display: none;
+    }
+
+    .remove-photo-btn {
+        display: none;
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: #ffffff;
+        color: #d90429;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        line-height: 24px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid #f87171;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .remove-photo-btn:hover {
+        background: #d90429;
+        color: #ffffff;
+        border-color: #d90429;
+        transform: scale(1.1);
+    }
+
+    /* Submit Button */
+    .btn-submit {
+        background: #d90429;
+        color: #ffffff;
+        border: none;
+        border-radius: 14px;
+        padding: 16px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(217, 4, 41, 0.3);
+        margin-top: 10px;
+    }
+
+    .btn-submit:hover {
+        background: #b00321;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(217, 4, 41, 0.4);
+    }
+
+    /* Modal CSS (Also Glass!) */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(8px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .modal-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        width: 90%;
+        max-width: 380px;
+        border-radius: 24px;
+        padding: 35px 30px;
+        text-align: center;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-overlay.show .modal-card {
+        transform: scale(1);
+    }
+
+    .modal-icon {
+        background: rgba(255, 255, 255, 0.9);
+        color: #20306F;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .modal-title-text {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 25px;
+        line-height: 1.4;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    .btn-yes, .btn-no {
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 700;
+        flex: 1;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .btn-yes {
+        background: #d90429;
+        color: #ffffff;
+    }
+
+    .btn-yes:hover {
+        background: #b00321;
+        transform: translateY(-2px);
+    }
+
+    .btn-no {
+        background: rgba(255, 255, 255, 0.6);
+        color: #475569;
+        border: 1px solid rgba(255,255,255,0.8);
+    }
+
+    .btn-no:hover {
+        background: #ffffff;
+        color: #1e293b;
+        transform: translateY(-2px);
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 500px) {
+        .form-container { padding: 35px 25px; }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="form-container">
+    <div class="text-center">
+        <img src="{% static 'images/logo.png' %}" alt="Navera Logo" class="brand-logo" onerror="this.src='https://via.placeholder.com/110x40?text=LOGO'">
+        <p class="brand-sub">Docket Form</p>
+        <h3 class="site-display">{{ location_obj.area.site.name|default:"Shyam Metalics" }}</h3>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="ticketForm">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label">Building</label>
+            {{ form.area }}
+            <div class="error-text">{{ form.area.errors }}</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Floor</label>
+            {{ form.location }}
+            <div class="error-text">{{ form.location.errors }}</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Area</label>
+            {{ form.specific_area }}
+            <div class="error-text">{{ form.specific_area.errors }}</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Issue Category</label>
+            {{ form.category }}
+            <div class="error-text">{{ form.category.errors }}</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+            <div class="error-text">{{ form.description.errors }}</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Phone Number</label>
+            {{ form.reporter_phone }}
+            <div class="error-text">{{ form.reporter_phone.errors }}</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Priority</label>
+            <div class="priority-group">
+                <input type="radio" name="priority" value="Low" id="low" class="d-none priority-radio" required>
+                <label for="low" class="priority-btn">Low</label>
+
+                <input type="radio" name="priority" value="Medium" id="med" class="d-none priority-radio">
+                <label for="med" class="priority-btn">Medium</label>
+
+                <input type="radio" name="priority" value="High" id="high" class="d-none priority-radio">
+                <label for="high" class="priority-btn">High</label>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Add a Photo</label>
+            <label class="photo-upload-box" for="id_photo" id="upload-label">
+                <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                
+                <span id="file-name" class="upload-text">Click to Upload or Take a Photo</span>
+                <div id="remove-btn" class="remove-photo-btn" title="Remove Photo">✕</div>
+            </label>
+            {{ form.photo }}
+            <div class="error-text">{{ form.photo.errors }}</div>
+        </div>
+
+        <button type="submit" class="btn-submit">Submit Ticket</button>
+    </form>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-card">
+        <div class="modal-icon">
+            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+        </div>
+        <div class="modal-title-text">Ready to submit this ticket?</div>
+        <div class="modal-buttons">
+            <button type="button" class="btn-no" id="btnNo">Cancel</button>
+            <button type="button" class="btn-yes" id="btnYes">Submit</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Photo Logic
+const photoInput = document.getElementById('id_photo');
+const fileNameSpan = document.getElementById('file-name');
+const removeBtn = document.getElementById('remove-btn');
+const uploadIcon = document.querySelector('.upload-icon');
+
+if(photoInput){
+    photoInput.addEventListener('change', function(e){
+        if (e.target.files && e.target.files.length > 0) {
+            fileNameSpan.textContent = e.target.files[0].name;
+            removeBtn.style.display = 'inline-block';
+            uploadIcon.style.display = 'none'; // Hide icon when file is selected
+        } else {
+            resetUploadBox();
+        }
+    });
+}
+
+function resetUploadBox() {
+    fileNameSpan.textContent = "Click to Upload or Take a Photo";
+    removeBtn.style.display = 'none';
+    uploadIcon.style.display = 'block';
+}
+
+if(removeBtn){
+    removeBtn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        photoInput.value = '';
+        resetUploadBox();
+    });
+}
+
+// Modal Script
+const form = document.getElementById('ticketForm');
+const modal = document.getElementById('confirmModal');
+const btnYes = document.getElementById('btnYes');
+const btnNo = document.getElementById('btnNo');
+
+form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    modal.classList.add('show');
+});
+
+btnNo.addEventListener('click', function() {
+    modal.classList.remove('show');
+});
+
+// Close modal if clicking outside the card
+modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+        modal.classList.remove('show');
+    }
+});
+
+btnYes.addEventListener('click', function() {
+    btnYes.textContent = 'Submitting...';
+    btnYes.style.opacity = '0.8';
+    form.submit();
+});
+</script>
+
+</body>
+</html>

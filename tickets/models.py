@@ -58,3 +58,18 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"Ticket #{self.id} | {self.location.name} | {self.status}"
+
+
+# 🌟 NEW CLASS ALIGNED TO THE LEFT 🌟
+class TicketLog(models.Model):
+    # 🌟 This links the log directly to the specific ticket!
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='logs')
+    status = models.CharField(max_length=20)
+    remarks = models.TextField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp'] # Shows newest logs at the top
+
+    def __str__(self):
+        return f"Ticket #{self.ticket.id} -> {self.status}"

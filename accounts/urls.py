@@ -14,4 +14,8 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("ticket/update/<int:ticket_id>/", views.update_ticket_status, name="update_ticket"),
     path("ticket/delete/<int:ticket_id>/", views.delete_ticket, name="delete_ticket"),
+    path("audit-logs/", views.audit_logs, name="audit_logs"),
+    
+    # 🌟 NEW: Manage Masters Link
+    path("manage-locations/", views.manage_masters, name="manage_masters"),
 ]

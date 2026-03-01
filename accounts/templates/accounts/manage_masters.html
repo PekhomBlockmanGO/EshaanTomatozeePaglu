@@ -1,0 +1,230 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Locations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: linear-gradient(135deg, #1e2a5c 0%, #111a3f 100%);
+            color: white; padding: 40px; min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            height: 100%;
+        }
+        .form-control, .form-select {
+            background: rgba(255,255,255,0.8);
+            border: none; border-radius: 10px;
+        }
+        .btn-submit { background: #d90429; color: white; font-weight: bold; border-radius: 10px; width: 100%; transition: 0.3s; }
+        .btn-submit:hover { background: #b00321; }
+        .header-actions { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-back { background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; transition: 0.3s; }
+        .btn-back:hover { background: rgba(255,255,255,0.4); color: white; }
+        .badge-count { float: right; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px; font-size: 0.8rem; }
+
+        /* 🖨️ BULLETPROOF PRINT CSS */
+        @media print {
+            /* 1. Completely delete everything we don't want from the printout */
+            .header-actions, 
+            .col-lg-3, /* This targets and deletes cards 1 to 4 */
+            h5, 
+            form, 
+            .btn,
+            body::before, 
+            body::after {
+                display: none !important;
+            }
+
+            /* 2. Reset the background to pure white paper */
+            body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* 3. Strip the glass effect so the printer doesn't draw a big grey box */
+            .glass-card {
+                background: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                padding: 0 !important;
+            }
+
+            /* 4. Position the QR code nicely at the top of the page */
+            .qr-print-area {
+                margin: 0 auto !important;
+                padding: 20px !important;
+                border: none !important;
+                background: transparent !important;
+            }
+
+            /* 5. Add a dashed cut-out line around the printout instead of a shadow */
+            .qr-print-area > div {
+                box-shadow: none !important;
+                border: 2px dashed #cbd5e1 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container max-w-6xl">
+        <div class="header-actions">
+            <a href="{% url 'accounts:dashboard' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+            <h3 class="fw-bold m-0"><i class="bi bi-geo-alt-fill me-2"></i>Location Manager</h3>
+        </div>
+
+        <div class="row g-4">
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="glass-card">
+                    <h5 class="fw-bold mb-4">1. Add Site <span class="badge-count">{{ sites.count }}</span></h5>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="add_site">
+                        <div class="mb-3">
+                            <label class="small text-white-50 mb-1">Site Name</label>
+                            <input type="text" name="site_name" class="form-control" placeholder="e.g. Shyam Metalics" required>
+                        </div>
+                        <button type="submit" class="btn btn-submit mt-2">Create Site</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="glass-card">
+                    <h5 class="fw-bold mb-4">2. Add Building <span class="badge-count">{{ areas.count }}</span></h5>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="add_area">
+                        <div class="mb-3">
+                            <label class="small text-white-50 mb-1">Select Site</label>
+                            <select name="site_id" class="form-select" required>
+                                <option value="">Choose Site...</option>
+                                {% for s in sites %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-white-50 mb-1">Building Name</label>
+                            <input type="text" name="area_name" class="form-control" placeholder="e.g. Block A" required>
+                        </div>
+                        <button type="submit" class="btn btn-submit">Create Building</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="glass-card">
+                    <h5 class="fw-bold mb-4">3. Add Floor <span class="badge-count">{{ locations.count }}</span></h5>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="add_location">
+                        <div class="mb-3">
+                            <label class="small text-white-50 mb-1">Select Building</label>
+                            <select name="area_id" class="form-select" required>
+                                <option value="">Choose Building...</option>
+                                {% for a in areas %}<option value="{{ a.id }}">{{ a.name }} ({{ a.site.name }})</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="small text-white-50 mb-1">Floor Name</label>
+                            <input type="text" name="location_name" class="form-control" placeholder="e.g. 1st Floor" required>
+                        </div>
+                        <button type="submit" class="btn btn-submit">Create Floor</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="glass-card">
+                    <h5 class="fw-bold mb-4">4. Add Room <span class="badge-count">{{ specific_areas.count }}</span></h5>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="add_specific_area">
+                        <div class="mb-3">
+                            <label class="small text-white-50 mb-1">Room Name</label>
+                            <input type="text" name="specific_area_name" class="form-control" placeholder="e.g. Server Room" required>
+                        </div>
+                        <button type="submit" class="btn btn-submit mt-2">Create Room</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="col-12 mt-4">
+                <div class="glass-card">
+                    <h5 class="fw-bold mb-4"><i class="bi bi-qr-code-scan me-2"></i>5. Generate Print-Ready QR Code</h5>
+                    <form method="POST" class="row g-3 align-items-end">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="generate_qr">
+                        
+                        <div class="col-md-3">
+                            <label class="small text-white-50 mb-1">Site</label>
+                            <select name="qr_site" class="form-select" required>
+                                <option value="">Select...</option>
+                                {% for s in sites %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="small text-white-50 mb-1">Building</label>
+                            <select name="qr_area" class="form-select" required>
+                                <option value="">Select...</option>
+                                {% for a in areas %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small text-white-50 mb-1">Floor</label>
+                            <select name="qr_location" class="form-select" required>
+                                <option value="">Select...</option>
+                                {% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="small text-white-50 mb-1">Room</label>
+                            <select name="qr_room" class="form-select" required>
+                                <option value="">Select...</option>
+                                {% for r in specific_areas %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-submit w-100" style="background: #ffffff; color: #20306F;">Generate QR</button>
+                        </div>
+                    </form>
+
+                    {% if qr_data %}
+                    <div class="mt-4 text-center p-4 qr-print-area" style="background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.3);">
+                        <div style="background: white; display: inline-block; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                            
+                            <img src="data:image/png;base64,{{ qr_data }}" alt="QR Code" style="width: 250px; height: 250px;">
+                            
+                            <div style="color: #1e293b; margin-top: 15px; font-family: 'Inter', sans-serif;">
+                                <h4 style="font-weight: 900; margin: 0; color: #20306F; text-transform: uppercase;">{{ qr_site_name }}</h4>
+                                <p style="margin: 5px 0 0 0; font-weight: 600; color: #475569; font-size: 1.1rem;">{{ qr_location_name }}, {{ qr_room_name }}</p>
+                            </div>
+
+                        </div>
+                        <div class="mt-4">
+                            <button onclick="window.print()" class="btn btn-light fw-bold px-4 py-2" style="border-radius: 50px;"><i class="bi bi-printer-fill me-2"></i>Print QR Code</button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

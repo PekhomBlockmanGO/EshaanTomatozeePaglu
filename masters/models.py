@@ -47,7 +47,7 @@ class Location(models.Model):
     def save(self, *args, **kwargs):
         if not self.qr_image:
             # 🌟 Update this IP whenever you change Wi-Fi networks!
-            qr_url = f"http://192.168.0.215:8000/q/{self.qr_token}/"
+            qr_url = f"http://192.168.68.127:8000/q/{self.qr_token}/"
             
             qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_Q, box_size=12, border=2)
             qr.add_data(qr_url)

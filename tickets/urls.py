@@ -1,11 +1,18 @@
 from django.urls import path
 from . import views
 
+app_name = "tickets"   # ✅ Added namespace
+
 urlpatterns = [
-    # New manual link: http://127.0.0.1:8000/report/
+    # Manual Complaint
     path('report/', views.qr_complaint_view, name='manual_complaint'),
-    
-    # Original QR link: http://127.0.0.1:8000/q/random-token-here/
+
+    # QR Complaint
     path('q/<str:token>/', views.qr_complaint_view, name='qr_complaint'),
 
+    # Notification API
+    path('api/check-notifications/', views.check_new_tickets, name='check_notifications'),
+
+    # Emergency Page
+    path('emergency/', views.emergency_view, name='emergency'),
 ]

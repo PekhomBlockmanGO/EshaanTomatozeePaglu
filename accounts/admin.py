@@ -1,3 +1,7 @@
 from django.contrib import admin
+from .models import EmergencyContact
 
-# Register your models here.
+
+@admin.register(EmergencyContact)
+class EmergencyContactAdmin(admin.ModelAdmin):
+    list_display = ("phone_number",)

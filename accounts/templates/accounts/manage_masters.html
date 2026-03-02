@@ -1,230 +1,481 @@
+{% extends "accounts/base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Manage Locations</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: linear-gradient(135deg, #1e2a5c 0%, #111a3f 100%);
-            color: white; padding: 40px; min-height: 100vh;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 25px;
-            height: 100%;
-        }
-        .form-control, .form-select {
-            background: rgba(255,255,255,0.8);
-            border: none; border-radius: 10px;
-        }
-        .btn-submit { background: #d90429; color: white; font-weight: bold; border-radius: 10px; width: 100%; transition: 0.3s; }
-        .btn-submit:hover { background: #b00321; }
-        .header-actions { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-back { background: rgba(255,255,255,0.2); color: white; padding: 10px 20px; border-radius: 10px; text-decoration: none; transition: 0.3s; }
-        .btn-back:hover { background: rgba(255,255,255,0.4); color: white; }
-        .badge-count { float: right; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px; font-size: 0.8rem; }
 
-        /* 🖨️ BULLETPROOF PRINT CSS */
-        @media print {
-            /* 1. Completely delete everything we don't want from the printout */
-            .header-actions, 
-            .col-lg-3, /* This targets and deletes cards 1 to 4 */
-            h5, 
-            form, 
-            .btn,
-            body::before, 
-            body::after {
-                display: none !important;
-            }
+{% block page_title %}Admin Control Panel{% endblock %}
 
-            /* 2. Reset the background to pure white paper */
-            body {
-                background: white !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
+{% block extra_css %}
+<style>
+    /* --- PROFESSIONAL & CLASSY THEME --- */
+    :root {
+        --brand-navy: #1e2a5c;
+        --brand-red: #d90429;
+        --gray-100: #f1f5f9; /* Light Grey for Backgrounds */
+        --gray-200: #e2e8f0; /* Borders */
+        --gray-500: #64748b; /* Muted Text */
+        --gray-800: #1e293b; /* Dark Text */
+    }
 
-            /* 3. Strip the glass effect so the printer doesn't draw a big grey box */
-            .glass-card {
-                background: transparent !important;
-                border: none !important;
-                box-shadow: none !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                padding: 0 !important;
-            }
+    body {
+        background-color: #f8fafc;
+    }
 
-            /* 4. Position the QR code nicely at the top of the page */
-            .qr-print-area {
-                margin: 0 auto !important;
-                padding: 20px !important;
-                border: none !important;
-                background: transparent !important;
-            }
+    /* 1. CLASSY TABS */
+    .nav-tabs {
+        border-bottom: 2px solid var(--gray-200);
+        margin-bottom: 30px;
+        gap: 30px;
+    }
 
-            /* 5. Add a dashed cut-out line around the printout instead of a shadow */
-            .qr-print-area > div {
-                box-shadow: none !important;
-                border: 2px dashed #cbd5e1 !important;
-            }
-        }
-    </style>
-</head>
-<body>
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: var(--gray-500);
+        font-weight: 600;
+        font-size: 0.95rem;
+        background: transparent !important;
+        padding: 12px 4px;
+        border-radius: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-    <div class="container max-w-6xl">
-        <div class="header-actions">
-            <a href="{% url 'accounts:dashboard' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
-            <h3 class="fw-bold m-0"><i class="bi bi-geo-alt-fill me-2"></i>Location Manager</h3>
+    .nav-tabs .nav-link:hover {
+        color: var(--brand-navy);
+        border-bottom-color: #cbd5e1;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--brand-red) !important;
+        border-bottom: 3px solid var(--brand-red) !important;
+        background: transparent !important;
+    }
+
+    /* 2. CARDS */
+    .admin-card {
+        background: #ffffff;
+        border: 1px solid var(--gray-200);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .admin-card::after {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: var(--brand-navy);
+    }
+    .card-action::after { background: var(--brand-red); }
+    
+    .admin-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 3. INPUTS - BOLD VISIBLE DESIGN */
+    .form-control, .form-select {
+        /* This makes the box visible on the white card */
+        background-color: #f1f5f9 !important; 
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        padding: 12px 15px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        color: #1e2a5c !important;
+        /* Adds a subtle "inset" look so it looks like a field */
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.05) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+
+    /* Hover State: Makes the grey slightly darker so you know it's interactive */
+    .form-control:hover, .form-select:hover {
+        background-color: #e2e8f0 !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    /* Focus State: The Red Ring you requested */
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff !important; /* Turns white only when typing */
+        border-color: #d90429 !important; /* Brand Red Border */
+        box-shadow: 0 0 0 4px rgba(217, 4, 41, 0.2) !important; /* Bold Red Ring */
+        color: #000 !important;
+        outline: none !important;
+    }
+
+    /* Fix for multi-select groups box background */
+    select[multiple] {
+        background-color: #f1f5f9 !important;
+    }
+    
+    /* Focus: Turns White + Red Glow */
+    .form-control:focus, .form-select:focus {
+        background-color: #ffffff; /* Pop to white when typing */
+        border-color: var(--brand-red);
+        box-shadow: 0 0 0 4px rgba(217, 4, 41, 0.15);
+        outline: none;
+    }
+
+    /* 4. BUTTONS */
+    .btn-submit {
+        background: var(--brand-navy);
+        color: white; font-weight: 700; text-transform: uppercase;
+        font-size: 0.8rem; padding: 12px; border-radius: 8px;
+        width: 100%; border: none; margin-top: auto; letter-spacing: 0.5px;
+        transition: all 0.2s;
+    }
+    .btn-submit:hover { background: #151e45; box-shadow: 0 4px 12px rgba(30, 42, 92, 0.3); }
+    
+    .btn-danger-bold { background: var(--brand-red); }
+    .btn-danger-bold:hover { background: #b00321; box-shadow: 0 4px 12px rgba(217, 4, 41, 0.3); }
+
+    /* 5. TYPOGRAPHY */
+    h6 { color: var(--gray-800); font-weight: 800; text-transform: uppercase; font-size: 0.85rem; margin-bottom: 1rem; }
+    .form-label { font-size: 0.75rem; font-weight: 700; color: var(--gray-500); text-transform: uppercase; margin-bottom: 6px; display: block; }
+    
+    .count-badge {
+        background: var(--brand-red); color: white;
+        font-size: 0.7rem; padding: 2px 8px; border-radius: 4px;
+        font-weight: 700; float: right;
+    }
+
+    /* 6. TABLES */
+    .table-card {
+        background: white; border: 1px solid var(--gray-200);
+        border-radius: 12px; overflow: hidden;
+    }
+    .table-header {
+        background: var(--gray-100); padding: 15px 20px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .table th {
+        font-size: 0.75rem; text-transform: uppercase; font-weight: 700;
+        color: var(--gray-500); padding: 16px 20px; border-bottom: 2px solid var(--gray-200);
+    }
+    .table td {
+        padding: 16px 20px; vertical-align: middle; color: var(--gray-800);
+        font-weight: 500; border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .user-avatar-circle {
+        width: 32px; height: 32px; background: var(--brand-navy); color: white;
+        border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-weight: bold; margin-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#locations">
+                <i class="bi bi-building-fill"></i> Location Manager
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#users">
+                <i class="bi bi-people-fill"></i> Users & Roles
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#groups">
+                <i class="bi bi-shield-lock-fill"></i> Groups
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+
+        <div class="tab-pane fade show active" id="locations">
+            <div class="row g-4">
+                
+                <div class="col-md-6 col-lg-3">
+                    <div class="admin-card">
+                        <h6>Add Site <span class="count-badge">{{ sites.count }}</span></h6>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="add_site">
+                            <div class="mb-3">
+                                <label class="form-label">Site Name</label>
+                                <input type="text" name="site_name" class="form-control" placeholder="e.g. Headquarters" required>
+                            </div>
+                            <button type="submit" class="btn-submit">Create Site</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="admin-card">
+                        <h6>Add Building <span class="count-badge">{{ areas.count }}</span></h6>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="add_area">
+                            <div class="mb-3">
+                                <label class="form-label">Select Site</label>
+                                <select name="site_id" class="form-select" required>
+                                    <option value="">Choose Site...</option>
+                                    {% for s in sites %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Building Name</label>
+                                <input type="text" name="area_name" class="form-control" placeholder="e.g. Block A" required>
+                            </div>
+                            <button type="submit" class="btn-submit">Create Building</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="admin-card">
+                        <h6>Add Floor <span class="count-badge">{{ locations.count }}</span></h6>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="add_location">
+                            <div class="mb-3">
+                                <label class="form-label">Select Building</label>
+                                <select name="area_id" class="form-select" required>
+                                    <option value="">Choose Building...</option>
+                                    {% for a in areas %}<option value="{{ a.id }}">{{ a.name }} ({{ a.site.name }})</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Floor Name</label>
+                                <input type="text" name="location_name" class="form-control" placeholder="e.g. Level 1" required>
+                            </div>
+                            <button type="submit" class="btn-submit">Create Floor</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <div class="admin-card">
+                        <h6>Add Room <span class="count-badge">{{ specific_areas.count }}</span></h6>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="add_specific_area">
+                            <div class="mb-3">
+                                <label class="form-label">Room Name</label>
+                                <input type="text" name="specific_area_name" class="form-control" placeholder="e.g. Server Room" required>
+                            </div>
+                            <button type="submit" class="btn-submit btn-danger-bold">Create Room</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="admin-card card-action" style="background: #eef2f6;">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="bi bi-qr-code-scan fs-4 me-2 text-dark"></i>
+                            <h6 class="m-0">QR Code Generator</h6>
+                        </div>
+                        
+                        <form method="POST" class="row g-3 align-items-end">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="generate_qr">
+                            
+                            <div class="col-md">
+                                <label class="form-label">Site</label>
+                                <select name="qr_site" class="form-select" required>
+                                    <option value="">Select...</option>
+                                    {% for s in sites %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md">
+                                <label class="form-label">Building</label>
+                                <select name="qr_area" class="form-select" required>
+                                    <option value="">Select...</option>
+                                    {% for a in areas %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md">
+                                <label class="form-label">Floor</label>
+                                <select name="qr_location" class="form-select" required>
+                                    <option value="">Select...</option>
+                                    {% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md">
+                                <label class="form-label">Room</label>
+                                <select name="qr_room" class="form-select" required>
+                                    <option value="">Select...</option>
+                                    {% for r in specific_areas %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-auto">
+                                <button type="submit" class="btn-submit btn-danger-bold px-4">Generate Code</button>
+                            </div>
+                        </form>
+                        
+                        {% if qr_data %}
+                        <div class="mt-3 p-3 bg-white border rounded d-inline-block">
+                            <img src="data:image/png;base64,{{ qr_data }}" width="120">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <div class="row g-4">
+        <div class="tab-pane fade" id="users">
             
-            <div class="col-md-6 col-lg-3">
-                <div class="glass-card">
-                    <h5 class="fw-bold mb-4">1. Add Site <span class="badge-count">{{ sites.count }}</span></h5>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="form_type" value="add_site">
-                        <div class="mb-3">
-                            <label class="small text-white-50 mb-1">Site Name</label>
-                            <input type="text" name="site_name" class="form-control" placeholder="e.g. Shyam Metalics" required>
-                        </div>
-                        <button type="submit" class="btn btn-submit mt-2">Create Site</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3">
-                <div class="glass-card">
-                    <h5 class="fw-bold mb-4">2. Add Building <span class="badge-count">{{ areas.count }}</span></h5>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="form_type" value="add_area">
-                        <div class="mb-3">
-                            <label class="small text-white-50 mb-1">Select Site</label>
-                            <select name="site_id" class="form-select" required>
-                                <option value="">Choose Site...</option>
-                                {% for s in sites %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="small text-white-50 mb-1">Building Name</label>
-                            <input type="text" name="area_name" class="form-control" placeholder="e.g. Block A" required>
-                        </div>
-                        <button type="submit" class="btn btn-submit">Create Building</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3">
-                <div class="glass-card">
-                    <h5 class="fw-bold mb-4">3. Add Floor <span class="badge-count">{{ locations.count }}</span></h5>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="form_type" value="add_location">
-                        <div class="mb-3">
-                            <label class="small text-white-50 mb-1">Select Building</label>
-                            <select name="area_id" class="form-select" required>
-                                <option value="">Choose Building...</option>
-                                {% for a in areas %}<option value="{{ a.id }}">{{ a.name }} ({{ a.site.name }})</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="small text-white-50 mb-1">Floor Name</label>
-                            <input type="text" name="location_name" class="form-control" placeholder="e.g. 1st Floor" required>
-                        </div>
-                        <button type="submit" class="btn btn-submit">Create Floor</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3">
-                <div class="glass-card">
-                    <h5 class="fw-bold mb-4">4. Add Room <span class="badge-count">{{ specific_areas.count }}</span></h5>
-                    <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="form_type" value="add_specific_area">
-                        <div class="mb-3">
-                            <label class="small text-white-50 mb-1">Room Name</label>
-                            <input type="text" name="specific_area_name" class="form-control" placeholder="e.g. Server Room" required>
-                        </div>
-                        <button type="submit" class="btn btn-submit mt-2">Create Room</button>
-                    </form>
-                </div>
-            </div>
-            
-            <div class="col-12 mt-4">
-                <div class="glass-card">
-                    <h5 class="fw-bold mb-4"><i class="bi bi-qr-code-scan me-2"></i>5. Generate Print-Ready QR Code</h5>
-                    <form method="POST" class="row g-3 align-items-end">
-                        {% csrf_token %}
-                        <input type="hidden" name="form_type" value="generate_qr">
-                        
-                        <div class="col-md-3">
-                            <label class="small text-white-50 mb-1">Site</label>
-                            <select name="qr_site" class="form-select" required>
-                                <option value="">Select...</option>
-                                {% for s in sites %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="small text-white-50 mb-1">Building</label>
-                            <select name="qr_area" class="form-select" required>
-                                <option value="">Select...</option>
-                                {% for a in areas %}<option value="{{ a.id }}">{{ a.name }}</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="small text-white-50 mb-1">Floor</label>
-                            <select name="qr_location" class="form-select" required>
-                                <option value="">Select...</option>
-                                {% for l in locations %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="small text-white-50 mb-1">Room</label>
-                            <select name="qr_room" class="form-select" required>
-                                <option value="">Select...</option>
-                                {% for r in specific_areas %}<option value="{{ r.id }}">{{ r.name }}</option>{% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-submit w-100" style="background: #ffffff; color: #20306F;">Generate QR</button>
-                        </div>
-                    </form>
-
-                    {% if qr_data %}
-                    <div class="mt-4 text-center p-4 qr-print-area" style="background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.3);">
-                        <div style="background: white; display: inline-block; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-                            
-                            <img src="data:image/png;base64,{{ qr_data }}" alt="QR Code" style="width: 250px; height: 250px;">
-                            
-                            <div style="color: #1e293b; margin-top: 15px; font-family: 'Inter', sans-serif;">
-                                <h4 style="font-weight: 900; margin: 0; color: #20306F; text-transform: uppercase;">{{ qr_site_name }}</h4>
-                                <p style="margin: 5px 0 0 0; font-weight: 600; color: #475569; font-size: 1.1rem;">{{ qr_location_name }}, {{ qr_room_name }}</p>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="admin-card card-action">
+                        <h6>Create New User</h6>
+                        <form method="POST" class="d-flex flex-column gap-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="create_user">
+                            <div>
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" class="form-control" required>
                             </div>
+                            <div>
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control">
+                            </div>
+                            <div>
+                                <label class="form-label">Password</label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Assign Groups</label>
+                                <select name="groups" class="form-select" multiple style="height: 100px;">
+                                    {% for g in groups %}<option value="{{ g.id }}">{{ g.name }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_superuser" id="adminCheck">
+                                <label class="form-label ms-2" for="adminCheck" style="cursor:pointer;">Grant Admin Access</label>
+                            </div>
+                            <button type="submit" class="btn-submit btn-danger-bold">Add User</button>
+                        </form>
+                    </div>
+                </div>
 
+                <div class="col-md-8">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h6 class="m-0">Registered Users</h6>
                         </div>
-                        <div class="mt-4">
-                            <button onclick="window.print()" class="btn btn-light fw-bold px-4 py-2" style="border-radius: 50px;"><i class="bi bi-printer-fill me-2"></i>Print QR Code</button>
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Groups</th>
+                                        <th>Role</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for u in users %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="user-avatar-circle">
+                                                    {{ u.username|slice:":1"|upper }}
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ u.username }}</div>
+                                                    <div class="small text-muted">{{ u.email|default:"No Email" }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% for g in u.groups.all %}
+                                            <span class="badge bg-light text-dark border">{{ g.name }}</span>
+                                            {% empty %}
+                                            <span class="text-muted small">-</span>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% if u.is_superuser %} <span class="badge bg-danger">ADMIN</span>
+                                            {% else %} <span class="badge bg-primary">USER</span> {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            {% if u.id != request.user.id %}
+                                            <form method="POST" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="form_type" value="delete_user">
+                                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                                <button class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash-fill"></i></button>
+                                            </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    {% endif %}
-
                 </div>
             </div>
-
         </div>
+
+        <div class="tab-pane fade" id="groups">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="admin-card card-action">
+                        <h6>Create Group</h6>
+                        <form method="POST" class="d-flex flex-column gap-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="create_group">
+                            <div>
+                                <label class="form-label">Group Name</label>
+                                <input type="text" name="group_name" class="form-control" placeholder="e.g. Maintenance" required>
+                            </div>
+                            <button type="submit" class="btn-submit btn-danger-bold">Create Group</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h6 class="m-0">Access Groups</h6>
+                        </div>
+                        <table class="table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Group Name</th>
+                                    <th>Active Members</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for g in groups %}
+                                <tr>
+                                    <td class="fw-bold">{{ g.name }}</td>
+                                    <td><span class="badge bg-secondary">{{ g.user_set.count }} Users</span></td>
+                                    <td class="text-end">
+                                        {% if g.user_set.count == 0 %}
+                                        <form method="POST">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="form_type" value="delete_group">
+                                            <input type="hidden" name="group_id" value="{{ g.id }}">
+                                            <button class="btn btn-sm btn-outline-danger border-0"><i class="bi bi-trash-fill"></i></button>
+                                        </form>
+                                        {% else %}
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-</body>
-</html>
+{% endblock %}

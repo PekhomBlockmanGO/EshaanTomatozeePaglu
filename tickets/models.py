@@ -3,12 +3,17 @@ from masters.models import Site, Area, Location, SpecificArea
 
 class Ticket(models.Model):
     CATEGORY_CHOICES = [
-        ('HVAC', 'HVAC'),
-        ('Electrical', 'Electrical'),
-        ('Plumbing', 'Plumbing'),
-        ('Housekeeping', 'Housekeeping'),
-        ('Other', 'Other'),
-    ]
+    ('HVAC', 'HVAC'),
+    ('Electrical', 'Electrical'),
+    ('Plumbing', 'Plumbing'),
+    ('Housekeeping', 'Housekeeping'),
+    ('Carpentry', 'Carpentry'),
+    ('STP/WTP', 'STP/WTP'),
+    ('Safety', 'Safety'),
+    ('Security', 'Security'),
+    ('Parking', 'Parking'),
+    ('Other', 'Other'),
+]
 
     PRIORITY_CHOICES = [
         ('Low', 'Low'),

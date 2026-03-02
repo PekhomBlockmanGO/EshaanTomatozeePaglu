@@ -7,11 +7,23 @@
     <title>Neverno CMMS - Report Issue</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
 
     <style>
-        /* Global & Background */
+        /* --- BRAND VARIABLES --- */
+        :root {
+            --brand-navy: #1e2a5c;
+            --brand-red: #d90429;
+            --gray-input: #f1f5f9;
+            --gray-border: #e2e8f0;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        /* 1. BACKGROUND & CONTAINER */
         body {
-            background: linear-gradient(135deg, #1e2a5c 0%, #111a3f 100%);
+            background-color: var(--brand-navy);
+            background-image: radial-gradient(circle at 50% 0%, #2a3b75 0%, #111a3f 100%);
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             padding: 20px;
             min-height: 100vh;
@@ -19,481 +31,345 @@
             justify-content: center;
             align-items: center;
             margin: 0;
-            position: relative;
-            overflow-x: hidden;
         }
 
-        /* Ambient Background Blobs to show off the glass effect */
-        body::before, body::after {
-            content: '';
-            position: absolute;
-            border-radius: 50%;
-            z-index: -1;
-            filter: blur(80px);
-        }
-        body::before {
-            width: 350px;
-            height: 350px;
-            background: rgba(217, 4, 41, 0.4); /* Brand Red */
-            top: 5%;
-            left: 15%;
-        }
-        body::after {
-            width: 400px;
-            height: 400px;
-            background: rgba(0, 150, 255, 0.3); /* Bright Blue */
-            bottom: 5%;
-            right: 15%;
-        }
-
-        /* Centered Glass Card */
         .form-container {
-            /* Glassmorphism core */
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(24px) saturate(150%);
-            -webkit-backdrop-filter: blur(24px) saturate(150%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-            
+            background: #ffffff;
             width: 100%;
-            max-width: 500px;
-            border-radius: 24px;
-            padding: 45px 40px;
+            max-width: 480px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
         }
 
-        /* Header & Branding */
-        .brand-logo {
-            width: 110px;
-            margin-bottom: 15px;
-            transition: transform 0.3s ease;
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        .brand-logo:hover {
-            transform: scale(1.05);
+
+        /* 2. HEADER SECTION */
+        .form-header-section {
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);
+            padding: 35px 30px 25px 30px;
+            border-bottom: 1px solid var(--gray-border);
+            text-align: center;
+            position: relative;
+        }
+
+        /* --- SOS BUTTON STYLING (UPDATED FOR TEXT) --- */
+        .btn-sos {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 44px; /* Slightly wider for text */
+            height: 44px;
+            background: var(--brand-red);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-weight: 900; /* Extra Bold */
+            font-size: 0.85rem; /* Readable text size */
+            letter-spacing: 0.5px; /* Spacing for clarity */
+            box-shadow: 0 4px 10px rgba(217, 4, 41, 0.4);
+            z-index: 10;
+            transition: transform 0.2s;
+            animation: sos-pulse 2s infinite;
+            border: 2px solid white; /* Adds a nice white ring for contrast */
+        }
+
+        .btn-sos:hover {
+            transform: scale(1.1);
+            background: #ff002b;
+            color: white;
+        }
+
+        @keyframes sos-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0.7); }
+            70% { box-shadow: 0 0 0 12px rgba(217, 4, 41, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(217, 4, 41, 0); }
+        }
+        /* -------------------------- */
+
+        .brand-logo {
+            width: 100px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
         }
 
         .brand-sub {
-            color: #475569;
-            font-size: 0.9rem;
+            color: var(--brand-red);
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 600;
-            margin-bottom: 5px;
+            letter-spacing: 2px;
+            font-weight: 800;
+            margin-bottom: 4px;
         }
 
         .site-display {
-            color: #1e2a5c;
+            color: var(--brand-navy);
             font-weight: 800;
-            font-size: 1.15rem; 
-            letter-spacing: 0.5px;
-            margin-top: 0;
-            margin-bottom: 30px;
-            text-transform: uppercase;
+            font-size: 1.4rem;
+            margin: 0;
+            letter-spacing: -0.5px;
         }
 
-        /* Form Labels */
+        .header-watermark {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+        }
+
+        /* 3. FORM BODY */
+        .form-body-section { padding: 30px; }
+
         .form-label {
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: #334155;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 8px;
-            display: block;
+            font-size: 0.7rem; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;
         }
 
-        /* Glass Form Inputs */
+        /* 4. INPUTS */
         select, textarea, input[type="text"], input[type="number"], input[type="tel"], input[type="email"] {
             width: 100%;
-            background: rgba(255, 255, 255, 0.6) !important;
-            border: 1px solid rgba(255, 255, 255, 0.9) !important;
-            border-radius: 12px !important;
-            padding: 14px 16px !important;
+            background-color: var(--gray-input) !important;
+            border: 2px solid var(--gray-border) !important;
+            border-radius: 10px !important;
+            padding: 12px 16px !important;
             font-size: 0.95rem !important;
-            color: #1e293b !important;
-            transition: all 0.3s ease !important;
+            color: var(--brand-navy) !important;
+            font-weight: 600 !important;
+            transition: all 0.2s ease-in-out !important;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03) !important;
             box-sizing: border-box;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02) !important;
+        }
+
+        select:hover, textarea:hover, input:hover {
+            background-color: #e2e8f0 !important;
+            border-color: #cbd5e1 !important;
         }
 
         select:focus, textarea:focus, input:focus {
-            background: rgba(255, 255, 255, 0.9) !important;
-            border-color: #20306F !important;
+            background-color: #ffffff !important;
+            border-color: var(--brand-red) !important;
+            box-shadow: 0 0 0 4px rgba(217, 4, 41, 0.15) !important;
             outline: none !important;
-            box-shadow: 0 4px 12px rgba(32, 48, 111, 0.1) !important;
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
+        textarea { resize: none; min-height: 100px; }
 
-        /* 🌟 NEW: Locked Fields CSS for QR Scans */
-        .locked-field {
-            pointer-events: none;
-            opacity: 0.7;
-            background: rgba(241, 245, 249, 0.5) !important;
+        .locked-field { pointer-events: none; opacity: 0.8; }
+        .locked-field input, .locked-field select {
+            background-color: #eef2f6 !important;
+            border-color: #e2e8f0 !important;
+            color: #64748b !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' class='bi bi-lock-fill' viewBox='0 0 16 16'%3E%3Cpath d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 10px center;
         }
 
         .error-text {
-            color: #d90429;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-top: 6px;
-            display: block;
+            color: var(--brand-red); font-size: 0.75rem; font-weight: 600; margin-top: 4px; display: block;
         }
 
-        /* Glass Priority Segmented Control */
+        /* 5. PRIORITY SELECTOR */
         .priority-group {
-            display: flex;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            padding: 6px;
-            border-radius: 14px;
+            display: flex; gap: 6px; background: var(--gray-input);
+            padding: 4px; border-radius: 10px; border: 1px solid var(--gray-border);
         }
 
         .priority-btn {
-            flex: 1;
-            text-align: center;
-            background: transparent;
-            border-radius: 10px;
-            padding: 10px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            color: #475569;
-            margin: 0;
-            border: 2px solid transparent;
+            flex: 1; text-align: center; border-radius: 8px; padding: 10px;
+            font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+            color: var(--text-muted); border: 1px solid transparent; margin: 0;
         }
 
-        #low:checked + .priority-btn {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: #22c55e;
-            color: #15803d;
-            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.15);
-        }
+        .priority-btn:hover { background: rgba(0,0,0,0.03); color: var(--text-dark); }
 
-        #med:checked + .priority-btn {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: #eab308;
-            color: #a16207;
-            box-shadow: 0 4px 10px rgba(234, 179, 8, 0.15);
-        }
+        #low:checked + .priority-btn { background: white; color: #10b981; border-color: #d1fae5; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1); }
+        #med:checked + .priority-btn { background: white; color: #f59e0b; border-color: #fef3c7; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.1); }
+        #high:checked + .priority-btn { background: white; color: var(--brand-red); border-color: #fee2e2; box-shadow: 0 2px 4px rgba(217, 4, 41, 0.1); }
 
-        #high:checked + .priority-btn {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: #ef4444;
-            color: #b91c1c;
-            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
-        }
-
-        /* Glass Upload Box */
+        /* 6. UPLOAD BOX */
         .photo-upload-box {
-            border: 2px dashed rgba(100, 116, 139, 0.4);
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 16px;
-            padding: 25px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: #475569;
-            width: 100%;
-            position: relative;
+            border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: 12px;
+            padding: 30px 20px; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; cursor: pointer; transition: all 0.2s; position: relative;
         }
 
-        .photo-upload-box:hover {
-            background: rgba(255, 255, 255, 0.7);
-            border-color: #20306F;
-            color: #20306F;
-        }
+        .photo-upload-box:hover { border-color: var(--brand-navy); background: #f1f5f9; }
 
-        .upload-icon {
-            width: 32px;
-            height: 32px;
-            margin-bottom: 10px;
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-        .photo-upload-box:hover .upload-icon {
-            opacity: 1;
-        }
+        .upload-icon { width: 40px; height: 40px; margin-bottom: 10px; color: var(--text-muted); transition: 0.2s; }
+        .photo-upload-box:hover .upload-icon { color: var(--brand-navy); transform: translateY(-2px); }
 
-        .upload-text {
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
+        .upload-text { font-weight: 600; font-size: 0.85rem; color: var(--text-dark); }
 
-        input[type="file"] {
-            display: none;
-        }
+        input[type="file"] { display: none; }
 
         .remove-photo-btn {
-            display: none;
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #ffffff;
-            color: #d90429;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            line-height: 24px;
-            text-align: center;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 2px solid #f87171;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none; position: absolute; top: 10px; right: 10px;
+            background: #fee2e2; color: var(--brand-red); border-radius: 50%;
+            width: 24px; height: 24px; line-height: 24px; text-align: center;
+            font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
+        .remove-photo-btn:hover { background: var(--brand-red); color: white; }
 
-        .remove-photo-btn:hover {
-            background: #d90429;
-            color: #ffffff;
-            border-color: #d90429;
-            transform: scale(1.1);
-        }
-
-        /* Submit Button */
+        /* 7. SUBMIT BUTTON */
         .btn-submit {
-            background: #d90429;
-            color: #ffffff;
-            border: none;
-            border-radius: 14px;
-            padding: 16px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            width: 100%;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(217, 4, 41, 0.3);
-            margin-top: 10px;
+            background: var(--brand-red); color: white; border: none; border-radius: 10px;
+            padding: 16px; font-weight: 700; font-size: 1rem; width: 100%; margin-top: 15px;
+            transition: all 0.2s; box-shadow: 0 4px 10px rgba(217, 4, 41, 0.25);
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
 
         .btn-submit:hover {
-            background: #b00321;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(217, 4, 41, 0.4);
+            background: #b00321; transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(217, 4, 41, 0.35);
         }
 
-        /* Powered By Styling */
-        .powered-by {
-            text-align: center;
-            margin-top: 25px;
-            font-size: 0.75rem;
-            color: #64748b;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .powered-by strong {
-            color: #1e2a5c;
-            font-weight: 800;
-            font-size: 0.8rem;
-        }
-
-        /* Modal CSS (Also Glass!) */
+        /* 8. MODAL */
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(8px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+            opacity: 0; transition: opacity 0.2s ease;
         }
-
-        .modal-overlay.show {
-            display: flex;
-            opacity: 1;
-        }
+        .modal-overlay.show { display: flex; opacity: 1; }
 
         .modal-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            width: 90%;
-            max-width: 380px;
-            border-radius: 24px;
-            padding: 35px 30px;
-            text-align: center;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: white; width: 90%; max-width: 350px; border-radius: 20px;
+            padding: 30px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            transform: scale(0.9); transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-
-        .modal-overlay.show .modal-card {
-            transform: scale(1);
-        }
+        .modal-overlay.show .modal-card { transform: scale(1); }
 
         .modal-icon {
-            background: rgba(255, 255, 255, 0.9);
-            color: #20306F;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            background: #eef2f6; color: var(--brand-navy); width: 60px; height: 60px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px; font-size: 1.5rem;
         }
 
-        .modal-title-text {
-            color: #1e293b;
-            font-weight: 700;
-            font-size: 1.2rem;
-            margin-bottom: 25px;
-            line-height: 1.4;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-
+        .modal-title-text { color: var(--brand-navy); font-weight: 800; font-size: 1.1rem; margin-bottom: 20px; }
+        .modal-buttons { display: flex; gap: 10px; }
+        
         .btn-yes, .btn-no {
-            border-radius: 12px;
-            padding: 12px 20px;
-            font-weight: 700;
-            flex: 1;
-            transition: all 0.2s ease;
-            border: none;
+            flex: 1; border-radius: 8px; padding: 12px; font-weight: 700; border: none; transition: 0.2s;
         }
+        .btn-yes { background: var(--brand-red); color: white; }
+        .btn-yes:hover { background: #b00321; }
+        .btn-no { background: var(--gray-input); color: var(--text-dark); }
+        .btn-no:hover { background: #e2e8f0; }
 
-        .btn-yes {
-            background: #d90429;
-            color: #ffffff;
-        }
-
-        .btn-yes:hover {
-            background: #b00321;
-            transform: translateY(-2px);
-        }
-
-        .btn-no {
-            background: rgba(255, 255, 255, 0.6);
-            color: #475569;
-            border: 1px solid rgba(255,255,255,0.8);
-        }
-
-        .btn-no:hover {
-            background: #ffffff;
-            color: #1e293b;
-            transform: translateY(-2px);
-        }
-
-        @media (max-width: 500px) {
-            .form-container { padding: 35px 25px; }
-        }
     </style>
 </head>
 
 <body>
 
 <div class="form-container">
-    <div class="text-center">
-        <img src="{% static 'images/logo.png' %}" alt="Navera Logo" class="brand-logo" onerror="this.src='https://via.placeholder.com/110x40?text=LOGO'">
-        <p class="brand-sub">Docket Form</p>
-        
-        <h3 class="site-display">{{ site_name }}</h3>
+    
+    <div class="form-header-section">
+        <a href="{% url 'tickets:emergency' %}" class="btn-sos">
+    SOS
+</a>
+
+        <img src="{% static 'images/logo.png' %}" alt="Logo" class="brand-logo" onerror="this.src='https://via.placeholder.com/110x40?text=LOGO'">
+        <div class="brand-sub">New Docket</div>
+        <h3 class="site-display">
+            {% if location_obj %}
+                {{ location_obj.area.site.name }}
+            {% else %}
+                Nevera
+            {% endif %}
+        </h3>
+        <div class="header-watermark">Powered by <strong>NEVERNO</strong></div>
     </div>
 
-    <form method="POST" enctype="multipart/form-data" id="ticketForm">
-        {% csrf_token %}
+    <div class="form-body-section">
+        <form method="POST" enctype="multipart/form-data" id="ticketForm">
+            {% csrf_token %}
 
-        <div class="mb-3 {% if is_qr %}locked-field{% endif %}">
-            <label class="form-label">Building</label>
-            {{ form.area }}
-            <div class="error-text">{{ form.area.errors }}</div>
-        </div>
-
-        <div class="mb-3 {% if is_qr %}locked-field{% endif %}">
-            <label class="form-label">Floor</label>
-            {{ form.location }}
-            <div class="error-text">{{ form.location.errors }}</div>
-        </div>
-
-        <div class="mb-3 {% if is_qr %}locked-field{% endif %}">
-            <label class="form-label">Room</label>
-            {{ form.specific_area }}
-            <div class="error-text">{{ form.specific_area.errors }}</div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Issue Category</label>
-            {{ form.category }}
-            <div class="error-text">{{ form.category.errors }}</div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Description</label>
-            {{ form.description }}
-            <div class="error-text">{{ form.description.errors }}</div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Phone Number</label>
-            {{ form.reporter_phone }}
-            <div class="error-text">{{ form.reporter_phone.errors }}</div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Priority</label>
-            <div class="priority-group">
-                <input type="radio" name="priority" value="Low" id="low" class="d-none priority-radio" required>
-                <label for="low" class="priority-btn">Low</label>
-
-                <input type="radio" name="priority" value="Medium" id="med" class="d-none priority-radio">
-                <label for="med" class="priority-btn">Medium</label>
-
-                <input type="radio" name="priority" value="High" id="high" class="d-none priority-radio">
-                <label for="high" class="priority-btn">High</label>
+            <div class="mb-3 {% if is_qr %}locked-field{% endif %}">
+                <label class="form-label">Building</label>
+                {{ form.area }}
+                <div class="error-text">{{ form.area.errors }}</div>
             </div>
-        </div>
 
-        <div class="mb-4">
-            <label class="form-label">Add a Photo</label>
-            <label class="photo-upload-box" for="id_photo" id="upload-label">
-                <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                
-                <span id="file-name" class="upload-text">Click to Upload or Take a Photo</span>
-                <div id="remove-btn" class="remove-photo-btn" title="Remove Photo">✕</div>
-            </label>
-            {{ form.photo }}
-            <div class="error-text">{{ form.photo.errors }}</div>
-        </div>
+            <div class="mb-3 {% if is_qr %}locked-field{% endif %}">
+                <label class="form-label">Floor</label>
+                {{ form.location }}
+                <div class="error-text">{{ form.location.errors }}</div>
+            </div>
 
-        <button type="submit" class="btn-submit">Submit Ticket</button>
-    </form>
+            <div class="mb-3 {% if is_qr %}locked-field{% endif %}">
+                <label class="form-label">Room</label>
+                {{ form.specific_area }}
+                <div class="error-text">{{ form.specific_area.errors }}</div>
+            </div>
 
-    <div class="powered-by">
-        Powered by <strong>Neverno</strong>
+            <div class="mb-3">
+                <label class="form-label">Issue Category</label>
+                {{ form.category }}
+                <div class="error-text">{{ form.category.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+                <div class="error-text">{{ form.description.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Phone Number</label>
+                {{ form.reporter_phone }}
+                <div class="error-text">{{ form.reporter_phone.errors }}</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Priority</label>
+                <div class="priority-group">
+                    <input type="radio" name="priority" value="Low" id="low" class="d-none priority-radio" required>
+                    <label for="low" class="priority-btn">Low</label>
+
+                    <input type="radio" name="priority" value="Medium" id="med" class="d-none priority-radio">
+                    <label for="med" class="priority-btn">Medium</label>
+
+                    <input type="radio" name="priority" value="High" id="high" class="d-none priority-radio">
+                    <label for="high" class="priority-btn">High</label>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Attach Photo</label>
+                <label class="photo-upload-box" for="id_photo" id="upload-label">
+                    <svg class="upload-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    
+                    <span id="file-name" class="upload-text">Tap to Upload</span>
+                    <div id="remove-btn" class="remove-photo-btn" title="Remove Photo">✕</div>
+                </label>
+                {{ form.photo }}
+                <div class="error-text">{{ form.photo.errors }}</div>
+            </div>
+
+            <button type="submit" class="btn-submit">Submit Ticket</button>
+        </form>
     </div>
-
 </div>
 
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-card">
         <div class="modal-icon">
-            <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+            <svg width="30" height="30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
         </div>
-        <div class="modal-title-text">Ready to submit this ticket?</div>
+        <div class="modal-title-text">Ready to submit?</div>
         <div class="modal-buttons">
             <button type="button" class="btn-no" id="btnNo">Cancel</button>
-            <button type="button" class="btn-yes" id="btnYes">Submit</button>
+            <button type="button" class="btn-yes" id="btnYes">Confirm</button>
         </div>
     </div>
 </div>
@@ -509,8 +385,10 @@ if(photoInput){
     photoInput.addEventListener('change', function(e){
         if (e.target.files && e.target.files.length > 0) {
             fileNameSpan.textContent = e.target.files[0].name;
-            removeBtn.style.display = 'inline-block';
-            uploadIcon.style.display = 'none'; // Hide icon when file is selected
+            removeBtn.style.display = 'block';
+            uploadIcon.style.display = 'none'; 
+            document.querySelector('.photo-upload-box').style.borderColor = '#1e2a5c';
+            document.querySelector('.photo-upload-box').style.background = '#eff6ff';
         } else {
             resetUploadBox();
         }
@@ -518,9 +396,11 @@ if(photoInput){
 }
 
 function resetUploadBox() {
-    fileNameSpan.textContent = "Click to Upload or Take a Photo";
+    fileNameSpan.textContent = "Tap to Upload";
     removeBtn.style.display = 'none';
     uploadIcon.style.display = 'block';
+    document.querySelector('.photo-upload-box').style.borderColor = '#cbd5e1';
+    document.querySelector('.photo-upload-box').style.background = '#f8fafc';
 }
 
 if(removeBtn){
@@ -554,7 +434,7 @@ modal.addEventListener('click', function(e) {
 });
 
 btnYes.addEventListener('click', function() {
-    btnYes.textContent = 'Submitting...';
+    btnYes.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Sending...';
     btnYes.style.opacity = '0.8';
     form.submit();
 });

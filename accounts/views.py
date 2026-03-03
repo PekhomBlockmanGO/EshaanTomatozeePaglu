@@ -13,6 +13,7 @@ from django.db.models import Count
 
 from tickets.models import Ticket, TicketLog
 from masters.models import Site, Area, Location, SpecificArea
+from .models import EmergencyContact
 
 
 # 🔹 Centralized Role Helper
@@ -22,9 +23,6 @@ def get_user_role(user):
     elif user.groups.filter(name__iexact="Manager").exists():
         return "Manager"
     return "Client"
-
-
-
 
 
 # 🔹 Daily Insights
@@ -187,7 +185,7 @@ def audit_logs(request):
     })
 
 
-# 🔹 Manage Masters (RESTORED)
+# 🔹 Manage Masters
 @login_required
 def manage_masters(request):
     role = get_user_role(request.user)
@@ -196,7 +194,7 @@ def manage_masters(request):
         messages.error(request, "Admins only.")
         return redirect("accounts:dashboard")
 
-    return render(request, "accounts/manage_masters.html", {
+    context = {
         "role": role,
         "sites": Site.objects.all(),
         "areas": Area.objects.all(),
@@ -204,7 +202,120 @@ def manage_masters(request):
         "specific_areas": SpecificArea.objects.all(),
         "users": User.objects.all(),
         "groups": Group.objects.all(),
-    })
+        "emergency_contact": EmergencyContact.objects.first(), 
+    }
+
+    if request.method == "POST":
+        form_type = request.POST.get("form_type")
+
+        if form_type == "add_site":
+            site_name = request.POST.get("site_name")
+            if site_name:
+                Site.objects.create(name=site_name)
+
+        elif form_type == "add_area":
+            site_id = request.POST.get("site_id")
+            area_name = request.POST.get("area_name")
+            if site_id and area_name:
+                site = get_object_or_404(Site, id=site_id)
+                Area.objects.create(site=site, name=area_name)
+
+        elif form_type == "add_location":
+            area_id = request.POST.get("area_id")
+            location_name = request.POST.get("location_name")
+            if area_id and location_name:
+                area = get_object_or_404(Area, id=area_id)
+                Location.objects.create(area=area, name=location_name)
+
+        elif form_type == "add_specific_area":
+            specific_area_name = request.POST.get("specific_area_name")
+            if specific_area_name:
+                SpecificArea.objects.create(name=specific_area_name)
+
+        elif form_type == "generate_qr":
+            qr_site = request.POST.get("qr_site")
+            qr_area = request.POST.get("qr_area")
+            qr_location = request.POST.get("qr_location")
+            qr_room = request.POST.get("qr_room")
+
+            if qr_site and qr_area and qr_location and qr_room:
+                site = get_object_or_404(Site, id=qr_site)
+                area = get_object_or_404(Area, id=qr_area)
+                location = get_object_or_404(Location, id=qr_location)
+                room = get_object_or_404(SpecificArea, id=qr_room)
+
+                qr_text = f"Site: {site.name}\nBuilding: {area.name}\nFloor: {location.name}\nRoom: {room.name}"
+                
+                qr = qrcode.QRCode(version=1, error_correction=ERROR_CORRECT_H, box_size=10, border=4)
+                qr.add_data(qr_text)
+                qr.make(fit=True)
+                img = qr.make_image(fill_color="black", back_color="white")
+                
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+                
+                context["qr_data"] = qr_base64
+                context["qr_site_name"] = site.name
+                context["qr_location_name"] = location.name
+                context["qr_room_name"] = room.name
+                
+                return render(request, "accounts/manage_masters.html", context)
+
+        elif form_type == "create_user":
+            username = request.POST.get("username")
+            email = request.POST.get("email")
+            password = request.POST.get("password")
+            is_superuser = request.POST.get("is_superuser") == "on"
+            group_ids = request.POST.getlist("groups")
+
+            if username and password:
+                if not User.objects.filter(username=username).exists():
+                    user = User.objects.create_user(username=username, email=email, password=password)
+                    user.is_superuser = is_superuser
+                    user.is_staff = is_superuser 
+                    user.save()
+                    if group_ids:
+                        user.groups.set(group_ids)
+
+        elif form_type == "delete_user":
+            user_id = request.POST.get("user_id")
+            if user_id:
+                User.objects.filter(id=user_id).delete()
+
+        elif form_type == "create_group":
+            group_name = request.POST.get("group_name")
+            if group_name:
+                Group.objects.get_or_create(name=group_name)
+
+        elif form_type == "delete_group":
+            group_id = request.POST.get("group_id")
+            if group_id:
+                Group.objects.filter(id=group_id).delete()
+
+        # --- STRICT 10-DIGIT EMERGENCY NUMBER LOGIC ---
+        elif form_type == "update_emergency":
+            phone_number = request.POST.get("phone_number", "").strip()
+            
+            # Check if it's exactly 10 characters and all numbers!
+            if phone_number.isdigit() and len(phone_number) == 10:
+                contact, created = EmergencyContact.objects.get_or_create(id=1)
+                contact.phone_number = phone_number
+                contact.save()
+                context["emergency_contact"] = contact 
+                messages.success(request, "Emergency number saved!")
+            else:
+                messages.error(request, "Error: Phone number must be exactly 10 digits.")
+
+        # Update context data again
+        context["sites"] = Site.objects.all()
+        context["areas"] = Area.objects.all()
+        context["locations"] = Location.objects.all()
+        context["specific_areas"] = SpecificArea.objects.all()
+        context["users"] = User.objects.all()
+        context["groups"] = Group.objects.all()
+
+    return render(request, "accounts/manage_masters.html", context)
 
 
 # 🔹 Manage Users
@@ -231,7 +342,6 @@ def manage_groups(request):
         "groups": Group.objects.all(),
     })
 
-from .models import EmergencyContact
 
 def emergency_view(request):
     contact = EmergencyContact.objects.first()
@@ -239,7 +349,7 @@ def emergency_view(request):
         "contact": contact
     })
 
-# 🔹 Dashboard (FIXED + Notification Ready)
+# 🔹 Dashboard
 @login_required
 def dashboard(request):
     role = get_user_role(request.user)
@@ -248,5 +358,5 @@ def dashboard(request):
     return render(request, "accounts/dashboard.html", {
         "tickets": tickets,
         "role": role,
-        "server_time": timezone.now().isoformat(),  # 🔥 Important for notifications
+        "server_time": timezone.now().isoformat(),  
     })

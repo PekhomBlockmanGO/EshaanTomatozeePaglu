@@ -5,6 +5,7 @@ from django.utils.dateparse import parse_datetime
 from masters.models import Location, Area
 from .forms import QRComplaintForm
 from .models import TicketLog, Ticket
+from accounts.models import EmergencyContact  # 👈 Added the import here!
 
 
 # --- QR / MANUAL COMPLAINT VIEW ---
@@ -59,11 +60,15 @@ def qr_complaint_view(request, token=None):
     else:
         form = QRComplaintForm(initial=initial_data, is_qr=is_qr)
 
+    # 👇 Fetch the emergency number from the database 👇
+    emergency_contact = EmergencyContact.objects.first()
+
     return render(request, 'tickets/complaint_form.html', {
         'form': form,
         'is_qr': is_qr,
         'location_obj': location_obj,
-        'site_name': site_name
+        'site_name': site_name,
+        'emergency_contact': emergency_contact  # 👈 Passed it to your HTML here!
     })
 
 
@@ -108,8 +113,6 @@ def check_new_tickets(request):
 
 # --- EMERGENCY VIEW ---
 def emergency_view(request):
-    from accounts.models import EmergencyContact
-
     contact = EmergencyContact.objects.first()
 
     return render(request, "tickets/emergency.html", {
